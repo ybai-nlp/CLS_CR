@@ -291,7 +291,8 @@ class SequenceGenerator(nn.Module):
         # if len(compression_rate) == 0:
         #     compression_rate = []
         # else:
-        compression_rate = compression_rate.index_select(0, new_order)
+        if not isinstance(compression_rate, float):
+            compression_rate = compression_rate.index_select(0, new_order)
         # print("compression_rate = ", compression_rate)
 
         
@@ -573,7 +574,8 @@ class SequenceGenerator(nn.Module):
 
 
             # select compression rate 
-            compression_rate = torch.index_select(compression_rate, dim=0, index=active_bbsz_idx)
+            if not isinstance(compression_rate, float):
+                compression_rate = torch.index_select(compression_rate, dim=0, index=active_bbsz_idx)
 
             if step > 0:
                 scores[:, :step] = torch.index_select(
