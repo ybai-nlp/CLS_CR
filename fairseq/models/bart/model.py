@@ -97,7 +97,8 @@ class BARTModel(TransformerModel):
             src_tokens,
             src_lengths=src_lengths,
             token_embeddings=token_embeddings,
-            return_all_hiddens=return_all_hiddens
+            return_all_hiddens=return_all_hiddens,
+            compression_rate=compression_rate,
         )
         x, extra = self.decoder(
             prev_output_tokens,
@@ -107,6 +108,7 @@ class BARTModel(TransformerModel):
             alignment_heads=alignment_heads,
             src_lengths=src_lengths,
             return_all_hiddens=return_all_hiddens,
+            compression_rate=compression_rate,
         )
         eos: int = self.eos
         if classification_head_name is not None:
