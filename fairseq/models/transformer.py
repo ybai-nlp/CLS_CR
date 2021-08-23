@@ -213,7 +213,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
 
 
         parser.add_argument('--use-embedding-CR', type=bool, default=False, help='introduce compression rate into the model via embedding to all tokens.')
-        parser.add_argument('--CR-embedding-scale', type=float, metavar='D', default=50, help='The scale of compression embedding. E.g., CR-embedding-scale = 10: 0.30 -> 3;CR-embedding-scale = 100: 0.30 -> 30.')
+        parser.add_argument('--CR-embedding-scale', type=int, metavar='D', default=50, help='The scale of compression embedding. E.g., CR-embedding-scale = 10: 0.30 -> 3;CR-embedding-scale = 100: 0.30 -> 30.')
         parser.add_argument('--l1-CR-regularization', type=bool, default=False, help='use l1 regularization')
         # fmt: on
 

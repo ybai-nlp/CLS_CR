@@ -122,28 +122,67 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
         # 如果返回了压缩率，压缩率的大小决定稀疏loss的大小
         if cr_rate is not None:
             attn = net_output[1]['attn'][0].mean(dim=1)
-            # print("attn = ", attn.size(), net_output[1]['attn'][0].size())
+            # print("attn = ", attn.size())
+            # print(net_output[1]['attn'][0].size())
             # print(attn)
-            # print("cr_rate = ", cr_rate)
-            # 过滤大于1/长度的位置
+            # print(torch.argsort(attn, dim=1))
+
+            sorted_attn_indexes = torch.argsort(attn, dim=1)
+
+            # print("cr_rate = ", cr_rate.size())
+            # print(cr_rate)
+
             src_lengths = sample['net_input']['src_lengths']
+            compressed_lengths = cr_rate * src_lengths
+            # print("src_lengths = ", src_lengths.size())
+            # print(src_lengths)
+            # print(compressed_lengths)
+
+            # 保留排名前百分之压缩率的位置的index
+            cr_tokens_mask = torch.arange(attn.size(1)).unsqueeze(0).repeat(attn.size(0), 1).cuda()
+            cr_tokens_mask = cr_tokens_mask.le(compressed_lengths.unsqueeze(-1))
+            # print("cr_tokens_mask = ", cr_tokens_mask.size())
+            # print(cr_tokens_mask)
+            sorted_attn_indexes = sorted_attn_indexes * cr_tokens_mask.long()
+            # print('sorted_attn_indexes = ', sorted_attn_indexes.size())
+            # print(sorted_attn_indexes)
+
+            # 选出这些index所对应的attention值，加在一起，与1做平方和。
+            filtered_attn = torch.gather(attn, 1, sorted_attn_indexes) * cr_tokens_mask.long()
+            # print("filtered_attn = ", filtered_attn.size())
+            # print(filtered_attn)
+
+            important_attn_weights = filtered_attn.sum(dim=1)
+            # print("important_attn_weights = ", important_attn_weights.size())
+            # print(important_attn_weights)
+
+            cr_loss = torch.nn.functional.mse_loss(important_attn_weights, torch.ones(important_attn_weights.size()).cuda())
+            # print("cr_loss = ", cr_loss.size())
+            # print(cr_loss)
+            # loss += cr_loss
+            
+
+
+
+            
+            # 过滤大于1/长度的位置
             # src_mask = sample['net_input']['src_tokens']
-            src_length_mask = 1 / src_lengths
+            # src_length_mask = 1 / src_lengths
             # print('src_length = ', src_lengths.size())
             # print(src_lengths)
             # print('src_length_mask = ', src_length_mask.size())
             # print(src_length_mask)
             # 大于平均重要度的的才计入
-            l1_mask = attn.ge(src_length_mask.unsqueeze(-1))
+            # l1_mask = attn.ge(src_length_mask.unsqueeze(-1))
             # 加mask，只保留大于平均重要度的
-            attn = attn * l1_mask.long()
+            # attn = attn * l1_mask.long()
 
 
             # 求l1, 加权
             # print("attnsum = ", attn.sum(dim=1))
-            l1_loss = attn.sum(dim=1) * (1 - cr_rate)
+            # l1_loss = attn.sum(dim=1) * (1 - cr_rate)
             # 加个超参
-            loss += l1_loss.mean() * 5
+            # loss += l1_loss.mean() * 5
 
             # 加权
             # l1_loss = l1_loss

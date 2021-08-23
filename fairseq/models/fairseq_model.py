@@ -320,7 +320,7 @@ class FairseqEncoderDecoderModel(BaseFairseqModel):
         decoder_out = self.decoder(
             prev_output_tokens, encoder_out=encoder_out, **kwargs
         )
-        return decoder_out
+        return decoder_out, None
 
     def forward_decoder(self, prev_output_tokens, **kwargs):
         # print("here_forward decoder ! ")
