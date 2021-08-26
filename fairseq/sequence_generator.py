@@ -260,6 +260,7 @@ class SequenceGenerator(nn.Module):
         # print("src_tokens size = ", src_tokens.size(0))
         if compression_rate is not None:
             if isinstance(compression_rate, float):
+                
                 encoder_compression_rate = torch.Tensor([compression_rate]).to(src_tokens.device).repeat(src_tokens.size(0)).float()
             else:
                 encoder_compression_rate = compression_rate
@@ -291,7 +292,7 @@ class SequenceGenerator(nn.Module):
         # if len(compression_rate) == 0:
         #     compression_rate = []
         # else:
-        if not isinstance(compression_rate, float):
+        if compression_rate is not None and not isinstance(compression_rate, float):
             compression_rate = compression_rate.index_select(0, new_order)
         # print("compression_rate = ", compression_rate)
 
@@ -574,7 +575,7 @@ class SequenceGenerator(nn.Module):
 
 
             # select compression rate 
-            if not isinstance(compression_rate, float):
+            if compression_rate is not None and not isinstance(compression_rate, float):
                 compression_rate = torch.index_select(compression_rate, dim=0, index=active_bbsz_idx)
 
             if step > 0:

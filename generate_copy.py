@@ -206,9 +206,19 @@ def _main(cfg: DictConfig, output_file):
         if cfg.generation.inference_compression_rate == 0:
             cfg.generation.inference_compression_rate = None
         if cfg.generation.oracle_compression_rate:
-            # print("here ! ! !")
-            # print("sample = ", sample)
             compression_rate = models[0].calculate_compression_rate(src_lengths=sample['net_input']['src_lengths'], prev_output_tokens=sample['net_input']['prev_output_tokens'])
+
+            if cfg.generation.oracle_noise:
+                print("compression_rate = ", compression_rate.size())
+                print(compression_rate)
+                mean = torch.zeros(compression_rate.size()).cuda()
+                std = torch.ones(compression_rate.size()).cuda()
+                noise = torch.normal(mean, std) / 20 
+                compression_rate += noise
+                compression_rate = torch.maximum(torch.Tensor([0.01]).cuda(), compression_rate)
+                compression_rate = torch.minimum(torch.Tensor([1.0]).cuda(), compression_rate)
+                print("after compression_rate = ", compression_rate.size())
+                print(compression_rate)
             hypos = task.inference_step(
                 generator,
                 models,

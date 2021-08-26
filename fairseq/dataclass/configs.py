@@ -905,6 +905,10 @@ class GenerationConfig(FairseqDataclass):
         default=False,
         metadata={"help": "Use oracle compression rate in inference stage."},
     )
+    oracle_noise: bool = field(
+        default=False,
+        metadata={"help": "Use oracle compression rate with noise in inference stage."},
+    )
 
 
 
