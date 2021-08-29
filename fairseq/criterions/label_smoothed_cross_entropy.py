@@ -77,6 +77,7 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
         3) logging outputs to display while training
         """
         net_output, cr_rate = model(**sample["net_input"])
+        # print("net_input = ", sample['net_input'])
         # print("net_output = ", net_output)
         # print("l1_loss = ", cr_rate)
         # exit()

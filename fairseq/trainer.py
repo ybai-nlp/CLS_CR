@@ -486,12 +486,15 @@ class Trainer(object):
 
             # load model parameters
             try:
-                missing_keys, unexpected_keys = self.model.load_state_dict(
+                return_value = self.model.load_state_dict(
                     state["model"], strict=False, model_cfg=self.cfg.model
                 )
                 # print("missing_keys = ", missing_keys)
                 # print("unexpected_keys = ", unexpected_keys)
-                assert len(unexpected_keys) == 0 and (missing_keys == ['encoder.cr_embedding.weight', 'decoder.cr_embedding.weight'] or len(missing_keys) == 0)
+                
+                if return_value is not None:
+                    missing_keys, unexpected_keys = return_value[0], return_value[1]
+                    assert len(unexpected_keys) == 0 and (missing_keys == ['encoder.cr_embedding.weight', 'decoder.cr_embedding.weight'] or len(missing_keys) == 0)
                 # exit()
                 # save memory for later steps
                 del state["model"]
