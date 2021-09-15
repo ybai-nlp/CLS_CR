@@ -215,6 +215,9 @@ class TransformerModel(FairseqEncoderDecoderModel):
         parser.add_argument('--use-embedding-CR', type=bool, default=False, help='introduce compression rate into the model via embedding to all tokens.')
         parser.add_argument('--CR-embedding-scale', type=int, metavar='D', default=50, help='The scale of compression embedding. E.g., CR-embedding-scale = 10: 0.30 -> 3;CR-embedding-scale = 100: 0.30 -> 30.')
         parser.add_argument('--l1-CR-regularization', type=bool, default=False, help='use l1 regularization')
+        parser.add_argument('--encoder-compress', type=bool, default=False, help='use encoder_compress')
+        parser.add_argument('--max-query-size', type=int, metavar='D', default=1024, help='The scale of compression embedding. E.g., CR-embedding-scale = 10: 0.30 -> 3;CR-embedding-scale = 100: 0.30 -> 30.')
+
         # fmt: on
 
     @classmethod
@@ -435,6 +438,10 @@ class TransformerEncoder(FairseqEncoder):
         )
 
 
+        if hasattr(self.args, 'encoder_compress'):
+            if self.args.encoder_compress:
+                # print("max_query_size = ", self.args.max_query_size + 5)
+                self.query_embedding = Embedding(self.args.max_query_size + 5, self.args.encoder_embed_dim, self.padding_idx)
 
         # compression rate embedding.
         if self.args.use_embedding_CR:
@@ -602,10 +609,135 @@ class TransformerEncoder(FairseqEncoder):
 
         # account for padding while computing the representation
         if has_pads:
+            # print("true!!")
             x = x * (1 - encoder_padding_mask.unsqueeze(-1).type_as(x))
 
         # B x T x C -> T x B x C
         x = x.transpose(0, 1)
+
+
+
+        if hasattr(self.args, 'encoder_compress'):
+            # print("TREUEUUERUEUREUU")
+            if self.args.encoder_compress:
+                # print("src_tokens = ", src_tokens.size())
+                # print(src_tokens)
+                # # compression_rate[0] = 0.2324
+                # print("compression_rate = ", compression_rate.size())
+                # print(compression_rate)
+                # print('src_lengths = ', src_lengths.size() )
+                # print(src_lengths)
+                # 变成上区间
+                embedding_interval = 1.0 / float(self.args.CR_embedding_scale)
+                normalized_compression_rate = ((compression_rate / embedding_interval).floor().float() + 1) * embedding_interval
+                # print("normalized_compression_rate: ", normalized_compression_rate.size())
+                # print(normalized_compression_rate)
+
+                query_lengths = (normalized_compression_rate * src_lengths).long()
+                query_lengths = torch.min(torch.Tensor([self.args.max_query_size - 1]).long().cuda(), query_lengths)
+                query_lengths = torch.max(torch.Tensor([1]).long().cuda(), query_lengths)
+                # print("query_lengths = ", query_lengths.size())
+                # print(query_lengths)
+                mask_length = torch.max(query_lengths)
+                # print("mask_length = ", mask_length)
+
+                query_ids = torch.arange(2, mask_length + 2).unsqueeze(0).repeat(src_tokens.size(0),1).cuda()
+                # print("query ids 111 = ", query_ids.size())
+                # print(query_ids)
+
+                filter_length = (query_lengths + 1).unsqueeze(1)
+                # print("filter_length = ", filter_length.size())
+                # print(filter_length )
+                mask_query = ~torch.le(query_ids, filter_length)
+                # print('mask_query = ', mask_query.size())
+                # print(mask_query)
+                # print("encoder_padding_mask = ", encoder_padding_mask.size())
+                # print(encoder_padding_mask)
+
+                # print("padding idx = ", self.padding_idx)
+                query_ids = query_ids.masked_fill(mask_query, self.padding_idx)
+                # print("query_ids 222 = ", query_ids)
+                # encoder_padding_mask = src_tokens.eq(self.padding_idx)
+                query = self.query_embedding(query_ids)
+
+
+                new_has_pads = query_ids.device.type == "xla" or mask_query.any()
+                if new_has_pads:
+                    query = query * (1 - mask_query.unsqueeze(-1).type_as(query))
+
+                # query = query * (1 - encoder_padding_mask.unsqueeze(-1).type_as(x))
+
+                query = query.transpose(0, 1)
+                # print("query = ", query.size())
+                # print(query)
+                # print("x = ", x.size())
+                # print(x)
+                x_with_query = torch.cat((x, query), 0)
+                # print("x_with_query = ", x_with_query.size())
+                # print(x_with_query)
+
+                encoder_states = []
+
+                attn_mask_1 = torch.arange(x_with_query.size(0)).lt(x.size(0)).cuda()
+                attn_mask_1 = attn_mask_1.unsqueeze(0).repeat(x.size(0), 1)
+
+                attn_mask_2 = torch.ones(x_with_query.size(0)).bool().cuda()
+                attn_mask_2 = attn_mask_2.unsqueeze(0).repeat(query.size(0), 1)
+
+                attn_mask = (~torch.cat((attn_mask_1, attn_mask_2), dim=0)).float()
+                # attn_mask = torch.zeros(x_with_query.size(0), x_with_query.size(0)).cuda().masked_fill(~torch.cat((attn_mask_1, attn_mask_2), dim=0), float('-inf'))
+
+                # print("attn_mask = ", attn_mask.size())
+                # print(attn_mask)
+                # exit()
+
+
+
+                if return_all_hiddens:
+                    encoder_states.append(x_with_query)
+                
+
+                # encoder layers
+                for layer in self.layers:
+                    x_with_query = layer(
+                        x_with_query, encoder_padding_mask=torch.cat((encoder_padding_mask,mask_query),1) if new_has_pads else None, attn_mask=attn_mask,
+                    )
+                    if return_all_hiddens:
+                        assert encoder_states is not None
+                        encoder_states.append(x_with_query)
+
+                if self.layer_norm is not None:
+                    x_with_query = self.layer_norm(x_with_query)
+
+                final_query = x_with_query[x.size(0):,:,:]
+                # 这里需要把query再存起来。
+                # The Pytorch Mobile lite interpreter does not supports returning NamedTuple in
+                # `forward` so we use a dictionary instead.
+                # TorchScript does not support mixed values so the values are all lists.
+                # The empty list is equivalent to None.
+                src_lengths = src_tokens.ne(self.padding_idx).sum(dim=1, dtype=torch.int32).reshape(-1, 1).contiguous()
+                # print("src_lengths = ", src_lengths.size())
+                # print(query_lengths.unsqueeze(-1).size())
+                # print(query_lengths.unsqueeze(-1))
+                # print(src_lengths)
+                return {
+                    "encoder_out": [final_query],  # T x B x C
+                    "encoder_padding_mask": [mask_query],  # B x T
+                    "encoder_embedding": [query.transpose(0, 1)],  # B x T x C
+                    "encoder_states": encoder_states,  # List[T x B x C]
+                    "src_tokens": [],
+                    # "src_lengths": [src_lengths],
+                    "src_lengths": [query_lengths.unsqueeze(-1)],
+                }
+
+                # print('mask_query = ', query_ids.size())
+                # print(query_ids)
+                # exit()
+
+                
+                # self.query_embedding = 0
+
+
 
         encoder_states = []
 
@@ -650,36 +782,60 @@ class TransformerEncoder(FairseqEncoder):
         Returns:
             *encoder_out* rearranged according to *new_order*
         """
+
+        # print("here !!!! ")
+        # print("new_order: ", new_order)
         if len(encoder_out["encoder_out"]) == 0:
             new_encoder_out = []
         else:
+            # print("here1 !!!! ")
             new_encoder_out = [encoder_out["encoder_out"][0].index_select(1, new_order)]
+
+        # print("new_order1: ", new_order)
+
         if len(encoder_out["encoder_padding_mask"]) == 0:
             new_encoder_padding_mask = []
         else:
+            # print("here2 !!!! ")
             new_encoder_padding_mask = [
                 encoder_out["encoder_padding_mask"][0].index_select(0, new_order)
             ]
+
+        # print("new_order2: ", new_order)
+
         if len(encoder_out["encoder_embedding"]) == 0:
             new_encoder_embedding = []
         else:
+            # print("here3 !!!! ")
             new_encoder_embedding = [
                 encoder_out["encoder_embedding"][0].index_select(0, new_order)
             ]
 
+        # print("new_order3: ", new_order)
+
         if len(encoder_out["src_tokens"]) == 0:
             src_tokens = []
         else:
+            # print("here4 !!!! ")
             src_tokens = [(encoder_out["src_tokens"][0]).index_select(0, new_order)]
+
+
+        # print("new_order4: ", new_order)
+
 
         if len(encoder_out["src_lengths"]) == 0:
             src_lengths = []
         else:
+            # print("new_order = ", new_order)
+            # print("here5 !!!! ")
+
             src_lengths = [(encoder_out["src_lengths"][0]).index_select(0, new_order)]
+            # print("new_lengths = ", src_lengths)
 
         encoder_states = encoder_out["encoder_states"]
         if len(encoder_states) > 0:
             for idx, state in enumerate(encoder_states):
+                # print("here6 !!!! ")
                 encoder_states[idx] = state.index_select(1, new_order)
 
         return {
@@ -989,6 +1145,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
                 - the decoder's features of shape `(batch, tgt_len, embed_dim)`
                 - a dictionary with any model-specific outputs
         """
+        # print("decoder!!")
         bs, slen = prev_output_tokens.size()
         if alignment_layer is None:
             alignment_layer = self.num_layers - 1

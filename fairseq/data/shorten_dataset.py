@@ -25,8 +25,10 @@ class TruncateDataset(BaseWrapperDataset):
         # print("self.sizes = ", self.sizes[index])
 
         item_len = item.size(0)
+        
         if item_len > self.truncation_length:
             item = item[: self.truncation_length]
+            # print("truncate size = ", item.size())
         return item
 
     @property

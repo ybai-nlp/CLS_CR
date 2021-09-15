@@ -264,6 +264,13 @@ class MultilingualDatasetManager(object):
             "up data loading and have specific dynamic sampling strategy interval",
         )
 
+        parser.add_argument(
+            "--share-mt-sum-tok",
+            default=True,
+            type=bool,
+            help="share the src_en_XX_cross and en_XX",
+        )
+
     @classmethod
     def load_langs(cls, args, **kwargs):
         if args.lang_dict and args.langs:
@@ -474,13 +481,13 @@ class MultilingualDatasetManager(object):
             if src_lang is None:
                 return None
             langtok = get_lang_tok(
-                lang=src_lang, lang_tok_style=self.args.lang_tok_style, spec=spec
+                lang=src_lang, lang_tok_style=self.args.lang_tok_style, spec=spec, share=self.args.share_mt_sum_tok
             )
         else:
             if tgt_lang is None:
                 return None
             langtok = get_lang_tok(
-                lang=tgt_lang, lang_tok_style=self.args.lang_tok_style, spec=spec
+                lang=tgt_lang, lang_tok_style=self.args.lang_tok_style, spec=spec, share=self.args.share_mt_sum_tok
             )
         return self.get_langtok_index(
             langtok, self.get_source_dictionary(src_lang) if src_lang else self.get_target_dictionary(tgt_lang)
@@ -490,7 +497,7 @@ class MultilingualDatasetManager(object):
         if spec is None:
             return None
         langtok = get_lang_tok(
-            lang=tgt_lang, lang_tok_style=self.args.lang_tok_style, spec=spec
+            lang=tgt_lang, lang_tok_style=self.args.lang_tok_style, spec=spec, share=self.args.share_mt_sum_tok
         )
         return self.get_langtok_index(langtok, self.get_target_dictionary(tgt_lang))
 
@@ -546,10 +553,11 @@ class MultilingualDatasetManager(object):
 
             src_dataset = self.load_data(prefix + src, src_dict, dataset_impl)
             if truncate_source:
+                # print("truncate !!!!!")
                 src_dataset = AppendTokenDataset(
                     TruncateDataset(
                         StripTokenDataset(src_dataset, src_dict.eos()),
-                        max_source_positions - 1,
+                        max_source_positions - 3,
                     ),
                     src_dict.eos(),
                 )

@@ -93,6 +93,7 @@ class TranslationFromPretrainedBARTTask(TranslationTask):
         # )
 
 
+        # print("truncate_source", self.cfg.truncate_source)
         # 这里变一下，加入裁减长度的选项，害。
         self.datasets[split] = load_langpair_dataset(
             data_path,

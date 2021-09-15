@@ -162,8 +162,10 @@ def _filter_by_size_dynamic(indices, size_fn, max_positions, raise_exception=Fal
 
     def check_size(idx):
         if isinstance(max_positions, float) or isinstance(max_positions, int):
+            # print("11111")
             return size_fn(idx) <= max_positions
         elif isinstance(max_positions, dict):
+            # print("22222")
             idx_size = size_fn(idx)
             assert isinstance(idx_size, dict)
             intersect_keys = set(max_positions.keys()) & set(idx_size.keys())
@@ -176,6 +178,7 @@ def _filter_by_size_dynamic(indices, size_fn, max_positions, raise_exception=Fal
             )
         else:
             # For MultiCorpusSampledDataset, will generalize it later
+            # print("33333")
             if not isinstance(size_fn(idx), Iterable):
                 return all(size_fn(idx) <= b for b in max_positions)
             return all(

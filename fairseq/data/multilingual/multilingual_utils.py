@@ -27,7 +27,7 @@ class LangTokStyle(Enum):
 
 @torch.jit.export
 def get_lang_tok(
-    lang: str, lang_tok_style: str, spec: str = LangTokSpec.main.value
+    lang: str, lang_tok_style: str, spec: str = LangTokSpec.main.value, share=True
 ) -> str:
     # TOKEN_STYLES can't be defined outside this fn since it needs to be
     # TorchScriptable.
@@ -44,7 +44,7 @@ def get_lang_tok(
     style = TOKEN_STYLES[lang_tok_style]
 
     # 修改，如果说有monolingual或cross lingual的话，直接换token
-    if len(lang.split('_')) > 2:
+    if len(lang.split('_')) > 2 and share:
         # print('111lang = ', lang)
         # print(lang[4:9])
         # print("style.format = ", style.format(lang[4:9]))

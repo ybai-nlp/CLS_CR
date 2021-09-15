@@ -169,6 +169,7 @@ class FairseqDataset(torch.utils.data.Dataset, EpochListening):
             list: list of removed indices
         """
         if isinstance(max_sizes, float) or isinstance(max_sizes, int):
+            # print("111111!!!!!1111!!!")
             if hasattr(self, "sizes") and isinstance(self.sizes, np.ndarray):
                 ignored = indices[self.sizes[indices] > max_sizes].tolist()
                 indices = indices[self.sizes[indices] <= max_sizes]
@@ -177,13 +178,16 @@ class FairseqDataset(torch.utils.data.Dataset, EpochListening):
                 and isinstance(self.sizes, list)
                 and len(self.sizes) == 1
             ):
+                # print("111111!!!!!22222!!!")
                 ignored = indices[self.sizes[0][indices] > max_sizes].tolist()
                 indices = indices[self.sizes[0][indices] <= max_sizes]
             else:
+                # print("111111!!!!!2222!!!")
                 indices, ignored = data_utils._filter_by_size_dynamic(
                     indices, self.size, max_sizes
                 )
         else:
+            # print("22222222222222222222!!!!!!!!")
             indices, ignored = data_utils._filter_by_size_dynamic(
                 indices, self.size, max_sizes
             )

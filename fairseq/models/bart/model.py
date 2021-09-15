@@ -38,6 +38,8 @@ class BARTModel(TransformerModel):
         }
 
     def __init__(self, args, encoder, decoder):
+        args.max_source_positions = 1024
+        args.max_target_positions = 1024
         super().__init__(args, encoder, decoder)
 
         # We follow BERT's random weight initialization

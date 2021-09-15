@@ -131,7 +131,10 @@ class TransformerEncoderLayer(nn.Module):
         # the attention weight (before softmax) for some padded element in query
         # will become -inf, which results in NaN in model parameters
         if attn_mask is not None:
-            attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), -1e8)
+            attn_mask = attn_mask.masked_fill(attn_mask.to(torch.bool), float('-inf'))
+            # print("attn_mask!!!! = ", attn_mask.size())
+            # print(attn_mask)
+            # exit()
 
         residual = x
         if self.normalize_before:
