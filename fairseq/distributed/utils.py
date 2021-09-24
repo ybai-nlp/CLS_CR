@@ -76,6 +76,7 @@ def infer_init_method(cfg: DistributedTrainingConfig, force_distributed=False):
 def _infer_torch_distributed_launch_init(cfg: DistributedTrainingConfig):
     cfg.distributed_init_method = "env://"
     cfg.distributed_world_size = int(os.environ["WORLD_SIZE"])
+    # print("sdjfkladjfkldasjfkld: ", cfg.distributed_world_size )
     cfg.distributed_rank = int(os.environ["RANK"])
     # processes are created by torch.distributed.launch
     cfg.distributed_no_spawn = True
@@ -256,10 +257,12 @@ def distributed_init(cfg: FairseqConfig):
                     cfg.distributed_training.distributed_init_method,
                 )
             ) 
+            print("device_count = ", torch.cuda.device_count())
+        # print("distributed_world_size = ", cfg.distributed_training.distributed_world_size)
             print('world size = ', cfg.distributed_training.distributed_world_size)
             print('rank = ', cfg.distributed_training.distributed_rank)
             print('backend = ', cfg.distributed_training.distributed_init_method)
-            print('rank = ', cfg.distributed_training.distributed_rank)
+            # print('rank = ', cfg.distributed_training.distributed_rank)
             dist.init_process_group(
                 backend=cfg.distributed_training.distributed_backend,
                 init_method=cfg.distributed_training.distributed_init_method,
@@ -345,6 +348,8 @@ def call_main(cfg: FairseqConfig, main, **kwargs):
             start_rank = cfg.distributed_training.distributed_rank
             cfg.distributed_training.distributed_rank = None  # assign automatically
             kwargs["start_rank"] = start_rank
+
+
             torch.multiprocessing.spawn(
                 fn=distributed_main,
                 args=(main, cfg, kwargs),

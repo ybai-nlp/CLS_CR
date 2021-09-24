@@ -217,6 +217,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
         parser.add_argument('--l1-CR-regularization', type=bool, default=False, help='use l1 regularization')
         parser.add_argument('--encoder-compress', type=bool, default=False, help='use encoder_compress')
         parser.add_argument('--max-query-size', type=int, metavar='D', default=1024, help='The scale of compression embedding. E.g., CR-embedding-scale = 10: 0.30 -> 3;CR-embedding-scale = 100: 0.30 -> 30.')
+        parser.add_argument('--finetune-from-CR', type=bool, default=False, help='introduce compression rate into the model via embedding to all tokens.')
 
         # fmt: on
 
@@ -317,6 +318,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
         # filter values greater than 1.
         mask_one = compression_rate.gt(1) 
         compression_rate = compression_rate.masked_fill(mask_one, 1)
+
         # compression_rate = torch.max(compression_rate, torch.ones())
         # print("compression rate before = ", tgt_lengths.float() / src_lengths.float())
         # print("compression rate after = ", compression_rate)
@@ -353,7 +355,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
         # print(prev_output_tokens)
         # if prev_output_tokens.eq(self.decoder.padding_idx).long().sum() > 0:
         #     exit()
-        if self.args.use_embedding_CR:
+        if self.args.use_embedding_CR and (hasattr(self.args, 'finetune_from_CR') and not self.args.finetune_from_CR):
             compression_rate = self.calculate_compression_rate(src_lengths, prev_output_tokens)
         else:
             compression_rate = None
@@ -602,6 +604,8 @@ class TransformerEncoder(FairseqEncoder):
                   Only populated if *return_all_hiddens* is True.
         """
         # compute padding mask
+        if hasattr(self.args, 'finetune_from_CR') and self.args.finetune_from_CR:
+            compression_rate = None
         encoder_padding_mask = src_tokens.eq(self.padding_idx)
         has_pads = src_tokens.device.type == "xla" or encoder_padding_mask.any()
 
@@ -1074,7 +1078,8 @@ class TransformerDecoder(FairseqIncrementalDecoder):
         # print("compression rate inside decoder: ", compression_rate)
         # if isinstance(compression_rate, float):
         #     print("true")
-
+        if hasattr(self.args, 'finetune_from_CR') and self.args.finetune_from_CR:
+            compression_rate = None
         x, extra = self.extract_features(
             prev_output_tokens,
             encoder_out=encoder_out,

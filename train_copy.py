@@ -5,6 +5,16 @@
 """
 Train a new model on one or across multiple GPUs.
 """
+import os
+# print("world size before = ", os.environ["WORLD_SIZE"])
+if "WORLD_SIZE" in os.environ.keys():
+    del os.environ["WORLD_SIZE"]
+# os.environ["WORLD_SIZE"] = '2'
+# print("world size after = ", os.environ["WORLD_SIZE"])
+# print("cuda visible devices = ", os.environ["CUDA_VISIBLE_DEVICES"])
+# print("nvidia visible devices = ", os.environ["NVIDIA_VISIBLE_DEVICES"])
+# os.environ["CUDA_VISIBLE_DEVICES"]='0,1'
+# print(os.environ["CUDA_VISIBLE_DEVICES"])
 import sys 
 sys.path.append('/home/yixin.by/workspace/code/fairseq-master')
 print(sys.path)
