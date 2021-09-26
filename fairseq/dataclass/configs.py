@@ -578,6 +578,12 @@ class CheckpointConfig(FairseqDataclass):
             "help": "finetune from a pretrained model; note that meters and lr scheduler will be reset"
         },
     )
+    load_bart_to_mulitilingual: Optional[bool] = field(
+        default=False,
+        metadata={
+            "help": "finetune from model should be bart model. load bart model into multitask model."
+        },
+    )
     reset_dataloader: bool = field(
         default=False,
         metadata={

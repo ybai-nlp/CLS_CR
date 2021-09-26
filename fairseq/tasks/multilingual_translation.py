@@ -26,6 +26,12 @@ logger = logging.getLogger(__name__)
 
 
 def _lang_token(lang: str):
+    # 添加，为了共享language pair
+    if len(lang.split('_')) > 2:
+        # print('111lang = ', lang)
+        # print(lang[4:9])
+        # print("style.format = ", style.format(lang[4:9]))
+        lang = lang[4:9]
     return "__{}__".format(lang)
 
 
@@ -91,6 +97,12 @@ class MultilingualTranslationTask(LegacyFairseqTask):
                                  'language token. (src/tgt)')
         parser.add_argument('--decoder-langtok', action='store_true',
                             help='replace beginning-of-sentence in target sentence with target language token')
+        parser.add_argument('--langs',  type=str, metavar='LANG',default=None,
+                            help='comma-separated list of monolingual language, '
+                                 'for example, "en,de,fr". These should match the '
+                                 'langs from pretraining (and be in the same order). '
+                                 'You should always add all pretraining language idx '
+                                 'during finetuning.')
         # fmt: on
 
     def __init__(self, args, dicts, training):
@@ -156,8 +168,16 @@ class MultilingualTranslationTask(LegacyFairseqTask):
                 assert dicts[lang].eos() == dicts[sorted_langs[0]].eos()
                 assert dicts[lang].unk() == dicts[sorted_langs[0]].unk()
             if args.encoder_langtok is not None or args.decoder_langtok:
-                for lang_to_add in sorted_langs:
-                    dicts[lang].add_symbol(_lang_token(lang_to_add))
+                if args.langs is None:
+                    for lang_to_add in sorted_langs:
+                        # 有langs的话，就不在这里加了。改在下变价
+                            dicts[lang].add_symbol(_lang_token(lang_to_add))
+                else:
+                    # 添加，用来加bart的语言token
+                    for l in args.langs.split(","):
+                        # 应该不影响，只要index是对的就没问题
+                        dicts[lang].add_symbol("__{}__".format(l))
+                    dicts[lang].add_symbol("<mask>")
             logger.info("[{}] dictionary: {} types".format(lang, len(dicts[lang])))
         return dicts, training
 

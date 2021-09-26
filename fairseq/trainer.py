@@ -486,15 +486,28 @@ class Trainer(object):
 
             # load model parameters
             try:
-                return_value = self.model.load_state_dict(
-                    state["model"], strict=False, model_cfg=self.cfg.model
-                )
+                # print("cfg = ", self.cfg.checkpoint)
+                # exit()
+                if self.cfg.checkpoint.load_bart_to_mulitilingual:
+                    return_value = self.model.load_bart_model(state['model'], strict=False, model_cfg=self.cfg.model)
+                else:
+                    return_value = self.model.load_state_dict(
+                        state["model"], strict=False, model_cfg=self.cfg.model
+                    )
                 # print("missing_keys = ", missing_keys)
                 # print("unexpected_keys = ", unexpected_keys)
                 
                 if return_value is not None:
-                    missing_keys, unexpected_keys = return_value[0], return_value[1]
-                    assert len(unexpected_keys) == 0 and (missing_keys == ['encoder.cr_embedding.weight', 'decoder.cr_embedding.weight'] or len(missing_keys) == 0)
+                    if isinstance(return_value, list):
+                        for each in return_value:
+                            missing_keys, unexpected_keys = each[0], each[1]
+                            assert len(unexpected_keys) == 0 and (missing_keys == ['encoder.cr_embedding.weight', 'decoder.cr_embedding.weight'] or len(missing_keys) == 0)
+
+                    else:
+                        missing_keys, unexpected_keys = return_value[0], return_value[1]
+                        # print("missing_keys = ", missing_keys)
+                        # print("unexpected_keys = ", unexpected_keys)
+                        assert (len(unexpected_keys) == 0 or unexpected_keys == ['encoder.cr_embedding.weight', 'decoder.cr_embedding.weight']) and (missing_keys == ['encoder.cr_embedding.weight', 'decoder.cr_embedding.weight'] or len(missing_keys) == 0)
                 # exit()
                 # save memory for later steps
                 del state["model"]
