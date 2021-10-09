@@ -557,12 +557,21 @@ class MultilingualDatasetManager(object):
                 src_dataset = AppendTokenDataset(
                     TruncateDataset(
                         StripTokenDataset(src_dataset, src_dict.eos()),
-                        max_source_positions - 3,
+                        max_source_positions - 2,
                     ),
                     src_dict.eos(),
                 )
             src_datasets.append(src_dataset)
-            tgt_datasets.append(self.load_data(prefix + tgt, tgt_dict, dataset_impl))
+            # tgt_datasets.append(self.load_data(prefix + tgt, tgt_dict, dataset_impl))
+            tgt_dataset = self.load_data(prefix + tgt, tgt_dict, dataset_impl)
+            tgt_dataset = AppendTokenDataset(
+                    TruncateDataset(
+                        StripTokenDataset(tgt_dataset, tgt_dict.eos()),
+                        max_source_positions - 2,
+                    ),
+                    tgt_dict.eos(),
+                )
+            tgt_datasets.append(tgt_dataset)
 
             logger.info(
                 "{} {} {}-{} {} examples".format(

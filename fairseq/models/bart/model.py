@@ -84,13 +84,23 @@ class BARTModel(TransformerModel):
         return_all_hiddens: bool = True,
         alignment_layer: Optional[int] = None,
         alignment_heads: Optional[int] = None,
+        multitask_type: Optional[float] = None,
     ):
 
-        if self.args.use_embedding_CR:
+        # if self.args.use_embedding_CR:
+        #     compression_rate = self.calculate_compression_rate(src_lengths, prev_output_tokens)
+        # else:
+        #     compression_rate = None
+            
+        if self.args.use_embedding_CR and (not self.args.finetune_from_CR) and multitask_type is None:
             compression_rate = self.calculate_compression_rate(src_lengths, prev_output_tokens)
         else:
             compression_rate = None
-            
+        
+        # 把多任务的embedding也统一进来。
+        if multitask_type is not None:
+            compression_rate = multitask_type
+
     
         if classification_head_name is not None:
             features_only = True

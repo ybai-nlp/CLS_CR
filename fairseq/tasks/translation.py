@@ -103,10 +103,20 @@ def load_langpair_dataset(
             )
         src_datasets.append(src_dataset)
 
+
         tgt_dataset = data_utils.load_indexed_dataset(
             prefix + tgt, tgt_dict, dataset_impl
         )
         if tgt_dataset is not None:
+            if truncate_source:
+                tgt_dataset = AppendTokenDataset(
+                    TruncateDataset(
+                        StripTokenDataset(tgt_dataset, tgt_dict.eos()),
+                        # 本来是-1 但由于bart加了token，所以变成-2，之后还要继续变
+                        max_source_positions - 2,
+                    ),
+                    tgt_dict.eos(),
+                )
             tgt_datasets.append(tgt_dataset)
 
         logger.info(

@@ -205,8 +205,8 @@ class MultilingualTransformerModel(FairseqMultiModel):
         super().load_state_dict(state_dict_subset, strict=strict, model_cfg=model_cfg)
     
     def load_bart_model(self, state_dict, strict=True, model_cfg=None):
-        print("state_dict = ", state_dict.keys())
-        print("self.keys = ", self.keys)
+        # print("state_dict = ", state_dict.keys())
+        # print("self.keys = ", self.keys)
         return_value = []
         for each in self.keys:
             tmp = self.models[each].load_state_dict(state_dict, strict=strict, model_cfg=model_cfg)

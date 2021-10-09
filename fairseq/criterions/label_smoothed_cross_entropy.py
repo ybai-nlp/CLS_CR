@@ -68,7 +68,7 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
         self.ignore_prefix_size = ignore_prefix_size
         self.report_accuracy = report_accuracy
 
-    def forward(self, model, sample, reduce=True):
+    def forward(self, model, sample, task_type=None, reduce=True):
         """Compute the loss for the given sample.
 
         Returns a tuple with three elements:
@@ -76,6 +76,11 @@ class LabelSmoothedCrossEntropyCriterion(FairseqCriterion):
         2) the sample size, which is used as the denominator for the gradient
         3) logging outputs to display while training
         """
+        if task_type is not None and isinstance(task_type, float):
+            sample['net_input']["compression_rate"] = torch.Tensor([task_type]).cuda()
+        if isinstance(task_type, bool):
+            reduce = task_type
+        # exit()
         net_output, cr_rate = model(**sample["net_input"])
         # print("net_input = ", sample['net_input'])
         # print("net_output = ", net_output)

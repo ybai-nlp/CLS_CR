@@ -125,6 +125,13 @@ class MultilingualTranslationTask(LegacyFairseqTask):
         # models.build_model(). This allows multitask type of sub-class can
         # build models other than the input lang_pairs
         self.model_lang_pairs = self.lang_pairs
+
+
+        self.lang_pairs_dict = {}
+        for i, each in enumerate(self.lang_pairs):
+            self.lang_pairs_dict[each] = i / 5.0 + 0.1
+        # print("The compression rate to each lang pair is :", self.lang_pairs_dict)
+
         self.langs = list(dicts.keys())
 
     @classmethod
@@ -169,11 +176,13 @@ class MultilingualTranslationTask(LegacyFairseqTask):
                 assert dicts[lang].unk() == dicts[sorted_langs[0]].unk()
             if args.encoder_langtok is not None or args.decoder_langtok:
                 if args.langs is None:
+                    # print("11111")
                     for lang_to_add in sorted_langs:
                         # 有langs的话，就不在这里加了。改在下变价
                             dicts[lang].add_symbol(_lang_token(lang_to_add))
                 else:
                     # 添加，用来加bart的语言token
+                    # print("22222")
                     for l in args.langs.split(","):
                         # 应该不影响，只要index是对的就没问题
                         dicts[lang].add_symbol("__{}__".format(l))
@@ -349,7 +358,7 @@ class MultilingualTranslationTask(LegacyFairseqTask):
         self, lang_pair, model, update_num, criterion, sample, optimizer, ignore_grad
     ):
         loss, sample_size, logging_output = criterion(
-            model.models[lang_pair], sample[lang_pair]
+            model.models[lang_pair], sample[lang_pair], self.lang_pairs_dict[lang_pair]
         )
         if ignore_grad:
             loss *= 0
@@ -401,7 +410,7 @@ class MultilingualTranslationTask(LegacyFairseqTask):
         return agg_loss, agg_sample_size, agg_logging_output
 
     def _per_lang_pair_valid_loss(self, lang_pair, model, criterion, sample):
-        return criterion(model.models[lang_pair], sample[lang_pair])
+        return criterion(model.models[lang_pair], sample[lang_pair], self.lang_pairs_dict[lang_pair])
 
     def valid_step(self, sample, model, criterion):
         model.eval()

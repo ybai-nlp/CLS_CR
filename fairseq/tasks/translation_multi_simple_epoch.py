@@ -305,6 +305,7 @@ class TranslationMultiSimpleEpochTask(LegacyFairseqTask):
             logger.info(f"mem usage: {data_utils.get_mem_usage()}")
 
             # filter examples that are too large
+            # 我把这里删掉了，老是删掉很多样例不知道为啥。
             if max_positions is not None:
                 my_time = time.time()
                 indices = self.filter_indices_by_size(
