@@ -201,12 +201,13 @@ def _main(cfg: DictConfig, output_file):
 
         gen_timer.start()
         # 这里就加了compression rate
-        # print("cfg.beam = ", cfg.generation.beam)
-        # print("cfg.inference_compression_rate = ", cfg.generation.inference_compression_rate)
+        print("cfg.beam = ", cfg.generation.beam)
+        print("cfg.inference_compression_rate = ", cfg.generation.inference_compression_rate)
         if cfg.generation.inference_compression_rate == 0:
             cfg.generation.inference_compression_rate = None
         if cfg.generation.oracle_compression_rate:
             compression_rate = models[0].calculate_compression_rate(src_lengths=sample['net_input']['src_lengths'], prev_output_tokens=sample['net_input']['prev_output_tokens'])
+            print("compression_rate = ", compression_rate)
 
             if cfg.generation.oracle_noise:
                 # print("compression_rate = ", compression_rate.size())

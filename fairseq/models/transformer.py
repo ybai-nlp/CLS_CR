@@ -357,16 +357,18 @@ class TransformerModel(FairseqEncoderDecoderModel):
         # if prev_output_tokens.eq(self.decoder.padding_idx).long().sum() > 0:
         #     exit()
         # cr 如果外边给了的话，就不进行计算了，只适用于multitask的情况下
-        if self.args.use_embedding_CR and (not self.args.finetune_from_CR) and multitask_type is None:
-            compression_rate = self.calculate_compression_rate(src_lengths, prev_output_tokens)
-        else:
-            compression_rate = None
-        
-        # 把多任务的embedding也统一进来。
-        if multitask_type is not None:
-            compression_rate = multitask_type
+        if hasattr(self.args, 'use_embedding_CR'):
+            if self.args.use_embedding_CR and (not self.args.finetune_from_CR) and multitask_type is None:
+                compression_rate = self.calculate_compression_rate(src_lengths, prev_output_tokens)
+            else:
+                compression_rate = None
+            
+            # 把多任务的embedding也统一进来。
+            if multitask_type is not None:
+                compression_rate = multitask_type
 
             
+        # print()
         
         encoder_out = self.encoder(
             src_tokens, src_lengths=src_lengths, return_all_hiddens=return_all_hiddens, compression_rate=compression_rate,
@@ -453,10 +455,11 @@ class TransformerEncoder(FairseqEncoder):
                 self.query_embedding = Embedding(self.args.max_query_size + 5, self.args.encoder_embed_dim, self.padding_idx)
 
         # compression rate embedding.
-        if self.args.use_embedding_CR:
-            self.cr_embedding = Embedding(self.args.CR_embedding_scale + 1, self.args.encoder_embed_dim, self.padding_idx)
-        else:
-            self.cr_embedding = None
+        if hasattr(self.args, 'use_embedding_CR'):
+            if self.args.use_embedding_CR:
+                self.cr_embedding = Embedding(self.args.CR_embedding_scale + 1, self.args.encoder_embed_dim, self.padding_idx)
+            else:
+                self.cr_embedding = None
 
         export = getattr(args, "export", False)
         if getattr(args, "layernorm_embedding", False):
@@ -607,7 +610,11 @@ class TransformerEncoder(FairseqEncoder):
                   padding elements of shape `(batch, src_len)`
                 - **encoder_embedding** (Tensor): the (scaled) embedding lookup
                   of shape `(batch, src_len, embed_dim)`
-                - **encoder_states** (List[Tensor]): all intermediate
+                - **encoder_states**
+                
+                
+                
+                 (List[Tensor]): all intermediate
                   hidden states of shape `(src_len, batch, embed_dim)`.
                   Only populated if *return_all_hiddens* is True.
         """
@@ -936,10 +943,11 @@ class TransformerDecoder(FairseqIncrementalDecoder):
 
 
         # compression rate embedding.
-        if self.args.use_embedding_CR:
-            self.cr_embedding = Embedding(self.args.CR_embedding_scale + 1, self.args.encoder_embed_dim, self.padding_idx)
-        else:
-            self.cr_embedding = None
+        if hasattr(self.args, 'use_embedding_CR'):
+            if self.args.use_embedding_CR:
+                self.cr_embedding = Embedding(self.args.CR_embedding_scale + 1, self.args.encoder_embed_dim, self.padding_idx)
+            else:
+                self.cr_embedding = None
 
         if not args.adaptive_input and args.quant_noise_pq > 0:
             self.quant_noise = apply_quant_noise_(

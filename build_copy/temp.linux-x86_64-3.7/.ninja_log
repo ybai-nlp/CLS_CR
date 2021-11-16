@@ -1,0 +1,9 @@
+# ninja log v5
+4	420	1625458071933382934	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/clib/libbleu/module.o	38b05311eef741f1
+4	483	1625458071995351316	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/clib/libbleu/libbleu.o	100b6af638d832f6
+2	4975	1625458077166061408	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/data/data_utils_fast.o	f7ddf3ed91b2a39f
+1	5148	1625458082558933952	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/data/token_block_utils_fast.o	624a26c13ffa932e
+3	25584	1625458108387554855	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/clib/libbase/balanced_assignment.o	63cf13ed0189f790
+3	20281	1625458130431045682	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/clib/libnat/edit_dist.o	890c103b14b882e0
+35	5928	1626765606691627191	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/data/data_utils_fast.o	f7ddf3ed91b2a39f
+2	5346	1626765612295352915	/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.7/fairseq/data/token_block_utils_fast.o	624a26c13ffa932e

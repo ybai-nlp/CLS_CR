@@ -1,0 +1,21 @@
+ninja_required_version = 1.3
+cxx = c++
+
+cflags = -pthread -B /home/user/miniconda/compiler_compat -Wl,--sysroot=/ -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -I/home/user/miniconda/include/python3.8 -c
+post_cflags = -std=c++11 -O3 -DTORCH_API_INCLUDE_EXTENSION_H -DTORCH_EXTENSION_NAME=libbleu -D_GLIBCXX_USE_CXX11_ABI=0
+ldflags = 
+
+rule compile
+  command = $cxx -MMD -MF $out.d $cflags -c $in -o $out $post_cflags
+  depfile = $out.d
+  deps = gcc
+
+
+
+build /mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.8/fairseq/clib/libbleu/libbleu.o: compile /mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/fairseq/clib/libbleu/libbleu.cpp
+build /mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/build/temp.linux-x86_64-3.8/fairseq/clib/libbleu/module.o: compile /mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/fairseq-master/fairseq/clib/libbleu/module.cpp
+
+
+
+
+
