@@ -20,9 +20,10 @@ torch==1.6.0
 files2rouge
 ```
 ### Others
+```
 CUDA 10.1
 cuDNN 7
-
+```
 ## Data Preparation 
 You can download the preprocessed data at [Google Drive](https://drive.google.com/drive/folders/1FdOYP6-Zv50PVlL6h8wwHFWos0RppF7V?usp=sharing).
 
