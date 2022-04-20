@@ -709,7 +709,20 @@ class Trainer(object):
             sample, is_dummy_batch = self._prepare_sample(sample)
             # print('sample = ', sample)
             # exit()
+            # print("sample = ", sample)
+            # print(self.cfg.common.CR_statistics)
+            if hasattr(self.cfg.common, 'CR_statistics') and self.cfg.common.CR_statistics:
+                # print("21321321321321")
+                # print("sample = ", sample)
+                cr = self.model.calculate_compression_rate(sample['net_input']['src_lengths'], sample['net_input']['prev_output_tokens'])
+                # print("cr = ", self.model.calculate_compression_rate(sample['net_input']['src_lengths'], sample['net_input']['prev_output_tokens']))
+                with open('/mnt/nas/users/yixin.by/workspace/gitlab.alibaba-inc.com/yixin.by/test_project/compression_en2zh_augment.txt','a') as writer:
+                    for each_cr in cr:
+                        writer.write(str(float(each_cr)) + '\n')
+                # exit()
 
+                continue
+            # exit()
             def maybe_no_sync():
                 """
                 Whenever *samples* contains more than one mini-batch, we
@@ -728,6 +741,8 @@ class Trainer(object):
             try:
                 with maybe_no_sync():
                     # forward and backward
+
+                    # print(" = ", sample)
                     loss, sample_size_i, logging_output = self.task.train_step(
                         sample=sample,
                         model=self.model,
@@ -769,6 +784,8 @@ class Trainer(object):
                 # To handle gradient accumulation use case, we explicitly
                 # mark step here for every forward pass without a backward pass
                 self._xla_markstep_and_send_to_cpu()
+        if hasattr(self.cfg.common, 'CR_statistics') and self.cfg.common.CR_statistics:
+            return None
 
         if is_dummy_batch:
             if torch.is_tensor(sample_size):

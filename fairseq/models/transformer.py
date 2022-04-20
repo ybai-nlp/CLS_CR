@@ -218,7 +218,7 @@ class TransformerModel(FairseqEncoderDecoderModel):
         parser.add_argument('--encoder-compress', type=bool, default=False, help='use encoder_compress')
         parser.add_argument('--max-query-size', type=int, metavar='D', default=1024, help='The scale of compression embedding. E.g., CR-embedding-scale = 10: 0.30 -> 3;CR-embedding-scale = 100: 0.30 -> 30.')
         parser.add_argument('--finetune-from-CR', type=bool, default=False, help='introduce compression rate into the model via embedding to all tokens.')
-        parser.add_argument('--0-2-finetune', type=bool, default=False, help='use compression rate 0.2 to finetune cls model.')
+        parser.add_argument('--cr-model-finetune', type=bool, default=False, help='use compression rate 0.2 to finetune cls model.')
         # parser.add_argument('--CR-statistics', type=bool, default=False, help='calculate cr.')
 
         # fmt: on
@@ -368,8 +368,8 @@ class TransformerModel(FairseqEncoderDecoderModel):
             # 把多任务的embedding也统一进来。
             if multitask_type is not None:
                 compression_rate = multitask_type
-            if hasattr(self.args, '0_2_finetune') and self.args.0_2_finetune:
-                compression_rate = torch.Tensor([0.25]).cuda()
+            if hasattr(self.args, 'cr_model_finetune') and self.args.cr_model_finetune:
+                compression_rate = torch.Tensor([0.10]).cuda()
 
             
         # print()

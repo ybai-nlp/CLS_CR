@@ -219,6 +219,10 @@ class CommonConfig(FairseqDataclass):
             "help": "path to run plasma_store, defaults to /tmp/plasma. Paths outside /tmp tend to fail."
         },
     )
+    CR_statistics: bool = field(
+        default=False, metadata={"help": "Store indices and sizes in shared memory"}
+    ) 
+    # parser.add_argument('--CR-statistics', type=bool, default=False, help='calculate cr.')
 
 
 @dataclass

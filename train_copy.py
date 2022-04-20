@@ -303,6 +303,10 @@ def train(
             "train_step-%d" % i
         ):
             log_output = trainer.train_step(samples)
+        # print("yes!", trainer.cfg.common.CR_statistics)
+        if hasattr(trainer.cfg.common, 'CR_statistics') and trainer.cfg.common.CR_statistics:
+            print("yes!", trainer.cfg.common.CR_statistics)
+            continue
 
         if log_output is not None:  # not OOM, overflow, ...
             # log mid-epoch stats
@@ -322,7 +326,9 @@ def train(
 
         if should_stop:
             break
-
+    if hasattr(trainer.cfg.common, 'CR_statistics') and trainer.cfg.common.CR_statistics:
+        print("yes!", trainer.cfg.common.CR_statistics)
+        exit()
     # log end-of-epoch stats
     logger.info("end of epoch {} (average epoch stats below)".format(epoch_itr.epoch))
     stats = get_training_stats(metrics.get_smoothed_values("train"))
